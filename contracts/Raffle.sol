@@ -20,7 +20,6 @@ contract Raffle is VRFConsumerBaseV2 {
     event RaffleEnter(address indexed player);
     event RequestedRaffleWinner(uint256 requestId);
 
-
     constructor(
         address _vrfCoordinator,
         uint256 entranceFee,
