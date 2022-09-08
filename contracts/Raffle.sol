@@ -18,6 +18,8 @@ contract Raffle is VRFConsumerBaseV2 {
     uint32 private constant NUM_WORDS = 1;
 
     event RaffleEnter(address indexed player);
+    event RequestedRaffleWinner(uint256 requestId);
+
 
     constructor(
         address _vrfCoordinator,
@@ -42,13 +44,14 @@ contract Raffle is VRFConsumerBaseV2 {
     }
 
     function requestRandomWinner() external {
-        i_vrfCoordinator.requestRandomWords(
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane,
             i_subscriptionId,
             REQUEST_CONFIRMATIONS,
             callbackGasLimit,
             NUM_WORDS
         );
+        emit RequestedRaffleWinner(requestId);
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
