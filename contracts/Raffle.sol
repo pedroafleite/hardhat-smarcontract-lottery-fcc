@@ -11,12 +11,19 @@ error Raffle__TransferFailed();
 error Raffle__NotOpen();
 error Raffle_UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
+/** @title A Raffle Contract
+ *   @author Pedro Leite
+ *   @notice Inspired by Patrick Collins' via his fantastic 32-hour Course
+ *   @dev This implements Chainlink VRF and Chainlink Keepers
+ */
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
+    /* Type declarations */
     enum RaffleState {
         OPEN,
         CALCULATING
     }
 
+    /* State variables */
     uint256 private immutable i_entranceFee;
     address payable[] private s_players;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
@@ -26,15 +33,18 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
 
+    // Lottery variables
     address private s_recentWinner;
     RaffleState private s_raffleState;
     uint256 private s_lastTimeStamp;
     uint256 private immutable i_interval;
 
+    /* Events */
     event RaffleEnter(address indexed player);
     event RequestedRaffleWinner(uint256 requestId);
     event WinnerPicked(address indexed winner);
 
+    /* Functions */
     constructor(
         address _vrfCoordinator,
         uint256 entranceFee,
@@ -75,7 +85,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *    so that new players cannot temporarily join.
      */
     function checkUpkeep(
-        bytes calldata //checkData
+        bytes memory //checkData
     )
         public
         override
@@ -131,6 +141,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit WinnerPicked(recentWinner);
     }
 
+    // View / Pure getter functions
+
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee;
     }
@@ -141,5 +153,25 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     function getRecentWinner() public view returns (address) {
         return s_recentWinner;
+    }
+
+    function getRaffleState() public view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getNumWords() public pure returns (uint256) {
+        return NUM_WORDS;
+    }
+
+    function getNumberOfPlayers() public view returns (uint256) {
+        return s_players.length;
+    }
+
+    function getLatestTimestamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRequestConfirmations() public pure returns (uint256) {
+        return REQUEST_CONFIRMATIONS;
     }
 }
