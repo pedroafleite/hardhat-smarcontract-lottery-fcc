@@ -77,7 +77,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     /**
      * @dev checkUpkeep is the function that Chainlink Keepers nodes call.
      * They look for the checkUpkeep to return true. In order for it to be true:
-     * 1. Out time interval should have passed.
+     * 1. Time interval should have passed.
      * 2. The lottery should have at least 1 player, and have some ETH.
      * 3. Our subscription is funded with LINK.
      * 4. Our lottery should be in an open state,
@@ -85,7 +85,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *    so that new players cannot temporarily join.
      */
     function checkUpkeep(
-        bytes memory //checkData
+        bytes memory // checkData
     )
         public
         override
@@ -173,6 +173,18 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     function getRequestConfirmations() public pure returns (uint256) {
         return REQUEST_CONFIRMATIONS;
+    }
+
+    function getSubscriptionId() public view returns (uint64) {
+        return i_subscriptionId;
+    }
+
+    function getGasLane() public view returns (bytes32) {
+        return i_gasLane;
+    }
+
+    function getCallbackGasLimit() public view returns (uint256) {
+        return i_callbackGasLimit;
     }
 
     function getInterval() public view returns (uint256) {
