@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/pedroafleite/github/hardhat-smartcontract-lottery-fcc/contracts/Raffle.sol": {
-      "lastModificationDate": 1665834929328,
-      "contentHash": "7132d72139792037d60862d9ce4f9c7a",
+      "lastModificationDate": 1667302709819,
+      "contentHash": "83e72a3c684ebdfb905f6bdfeed672ba",
       "sourceName": "contracts/Raffle.sol",
       "solcConfig": {
         "version": "0.8.9",
