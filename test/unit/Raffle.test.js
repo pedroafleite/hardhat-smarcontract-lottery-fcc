@@ -144,45 +144,113 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.address)
                   ).to.be.revertedWith("nonexistent request")
               })
-              it("picks a winner, resets the lottery, and sends money", async function () {
-                  const additionalEntrants = 3
-                  const startingAccountIndex = 1 // deployer = 0
-                  const accounts = await ethers.getSigners()
-                  for (
-                      let i = startingAccountIndex;
-                      i < startingAccountIndex + additionalEntrants;
-                      i++
-                  ) {
-                      const accountConnectedRaffle = raffle.connect(accounts[i])
+              //   it("picks a winner, resets the lottery, and sends money", async function () {
+              //       const additionalEntrants = 3
+              //       const startingAccountIndex = 1 // deployer = 0
+              //       const accounts = await ethers.getSigners()
+              //       for (
+              //           let i = startingAccountIndex;
+              //           i < startingAccountIndex + additionalEntrants;
+              //           i++
+              //       ) {
+              //           const accountConnectedRaffle = raffle.connect(accounts[i])
+              //           await accountConnectedRaffle.enterRaffle({ value: raffleEntranceFee })
+              //       }
+              //       const startingTimeStamp = await raffle.getLatestTimestamp()
+
+              //       // performUpkeep (mock being Chainlink Keepers)
+              //       // fullfillRandomWords (mock being the Chainlink VRF)
+              //       // We will have to wait for the fulfillRandomWords to be called
+              //       await new Promise(async (resolve, reject) => {
+              //           raffle.once("WinnerPicked", async () => {
+              //               console.log("Found the event!")
+              //               try {
+              //                   const recentWinner = await raffle.getRecentWinner()
+              //                   const raffleState = await raffle.getRaffleState()
+              //                   const endingTimeStamp = await raffle.getLatestTimestamp()
+              //                   const numPlayers = await raffle.getNumberOfPlayers()
+              //                   const winnerBalance = await accounts[1].getBalance()
+              //                   assert.equal(recentWinner.toString(), accounts[1].address)
+              //                   assert.equal(numPlayers, 0)
+              //                   assert.equal(raffleState, 0)
+              //                   assert(endingTimeStamp > startingTimeStamp)
+              //                   assert.equal(
+              //                       winnerBalance.toString(),
+              //                       startingBalance.add(
+              //                           raffleEntranceFee
+              //                               .mul(additionalEntrants)
+              //                               .add(raffleEntranceFee)
+              //                               .toString()
+              //                       )
+              //                   )
+              //                   resolve()
+              //               } catch (e) {
+              //                   reject(e)
+              //               }
+              //           })
+              //           // Setting up the listener
+              //           // below, we will fire the event, and the listener will pick it up and resolve
+              //           const tx = await raffle.performUpkeep([])
+              //           const txReceipt = await tx.wait(1)
+              //           const startingBalance = await accounts[2].getBalance()
+              //           await vrfCoordinatorV2Mock.fulfillRandomWords(
+              //               txReceipt.event[1].args.requestId,
+              //               raffle.address
+              //           )
+              //       })
+              //   })
+              it("picks a winner, resets, and sends money", async () => {
+                  const additionalEntrances = 3 // to test
+                  const startingIndex = 2
+                  accounts = await ethers.getSigners()
+                  for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
+                      // i = 2; i < 5; i=i+1
+                      accountConnectedRaffle = raffle.connect(accounts[i]) // Returns a new instance of the Raffle contract connected to player
                       await accountConnectedRaffle.enterRaffle({ value: raffleEntranceFee })
                   }
-                  const startingTimeStamp = await raffle.getLatestTimestamp()
+                  const startingTimeStamp = await raffle.getLatestTimestamp() // stores starting timestamp (before we fire our event)
 
+                  // This will be more important for our staging tests...
                   await new Promise(async (resolve, reject) => {
                       raffle.once("WinnerPicked", async () => {
-                          console.log("Found the event!")
+                          // event listener for WinnerPicked
+                          console.log("WinnerPicked event fired!")
+                          // assert throws an error if it fails, so we need to wrap
+                          // it in a try/catch so that the promise returns event
+                          // if it fails.
                           try {
+                              // Now lets get the ending values...
                               const recentWinner = await raffle.getRecentWinner()
                               const raffleState = await raffle.getRaffleState()
+                              const winnerBalance = await accounts[2].getBalance()
                               const endingTimeStamp = await raffle.getLatestTimestamp()
-                              const numPlayers = await raffle.getNumberOfPlayers()
-                              console.log(recentWinner)
-                              console.log(accounts[2])
-                              console.log(accounts[0])
-                              console.log(accounts[1])
-                              console.log(accounts[3])
-                              assert.equal(numPlayers, 0)
+                              await expect(raffle.getNumberOfPlayers(0)).to.be.reverted
+                              // Comparisons to check if our ending values are correct:
+                              assert.equal(recentWinner.toString(), accounts[2].address)
                               assert.equal(raffleState, 0)
+                              assert.equal(
+                                  winnerBalance.toString(),
+                                  startingBalance // startingBalance + ( (raffleEntranceFee * additionalEntrances) + raffleEntranceFee )
+                                      .add(
+                                          raffleEntranceFee
+                                              .mul(additionalEntrances)
+                                              .add(raffleEntranceFee)
+                                      )
+                                      .toString()
+                              )
                               assert(endingTimeStamp > startingTimeStamp)
+                              resolve() // if try passes, resolves the promise
                           } catch (e) {
-                              reject()
+                              reject(e) // if try fails, rejects the promise
                           }
-                          resolve()
                       })
-                      const tx = await raffle.performUpkeep([])
+
+                      // kicking off the event by mocking the chainlink keepers and vrf coordinator
+                      const tx = await raffle.performUpkeep("0x")
                       const txReceipt = await tx.wait(1)
+                      const startingBalance = await accounts[2].getBalance()
                       await vrfCoordinatorV2Mock.fulfillRandomWords(
-                          txReceipt.event[1].args.requestId,
+                          txReceipt.events[1].args.requestId,
                           raffle.address
                       )
                   })
